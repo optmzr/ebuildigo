@@ -1,7 +1,17 @@
+-- My try at learning Haskell with some stdin parsing program.
 module Lib where
 
--- My try at learning Haskell with some stdin parsing program.
-import System.IO
+import Control.Monad (filterM)
+import GHC.IO.Exception (ExitCode)
+import System.Directory (doesDirectoryExist, listDirectory)
+import System.FilePath ((</>))
+import System.Process
+  ( StdStream(CreatePipe)
+  , cwd
+  , readCreateProcessWithExitCode
+  , shell
+  , std_out
+  )
 
 data GoModule = GoModule
   { path :: String
@@ -35,3 +45,14 @@ toEgoDep :: GoModule -> EgoDep
 -- Matches with the GoModule data, where `path` is set to be the same thing as
 -- `n` and `version` is the same thing as `h`.
 toEgoDep GoModule {path = n, version = h} = EgoDep {name = n, hash = h, uri = n}
+
+getDirectories :: FilePath -> IO [FilePath]
+getDirectories filePath =
+  listDirectory filePath >>= filterM (doesDirectoryExist . (filePath </>))
+
+getLongHash :: FilePath -> String -> IO (ExitCode, String, String)
+getLongHash filePath ident =
+  readCreateProcessWithExitCode
+    (shell ("git rev-parse " ++ ident))
+      {cwd = Just filePath, std_out = CreatePipe}
+    []

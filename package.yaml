@@ -21,6 +21,9 @@ description:         Please see the README on GitHub at <https://github.com/will
 
 dependencies:
 - base >= 4.7 && < 5
+- directory
+- filepath
+- process
 
 library:
   source-dirs: src
