@@ -29,7 +29,7 @@ getGoModule :: [String] -> GoModule
 -- Pattern matching:
 -- Matches with ["something", "something"], and then uses the
 -- variables p and v to construct a Module.
-getGoModule [p, v, _] = GoModule {path = p, version = v}
+getGoModule [p, v] = GoModule {path = p, version = v}
 
 parseGoModules :: String -> [GoModule]
 -- Dot operator (function composition):
