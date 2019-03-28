@@ -9,6 +9,6 @@ main = do
   let modules = parseGoModules contents
   let deps = map toEgoDep modules
   dirs <- getAbsDirectories "/home/willeponken/go/pkg/mod/cache/vcs/"
-  hash <- findLongHash dirs "a34e9553db1e"
+  hash <- findLongHash dirs "golang.org/x/sys" "a34e9553db1e"
   print dirs
   print hash

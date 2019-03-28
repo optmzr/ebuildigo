@@ -2,6 +2,7 @@
 module Lib where
 
 import Control.Monad (filterM)
+import Data.List (isSuffixOf)
 import GHC.IO.Exception (ExitCode(ExitSuccess))
 import System.Directory (canonicalizePath, doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
@@ -54,16 +55,27 @@ getDirectories :: FilePath -> IO [FilePath]
 getDirectories filePath =
   listDirectory filePath >>= filterM (doesDirectoryExist . (filePath </>))
 
-callRevParse :: FilePath -> String -> IO (ExitCode, String, String)
-callRevParse filePath ident =
-  readCreateProcessWithExitCode
-    (shell ("git rev-parse " ++ ident)) {cwd = Just filePath}
-    []
+callCommand :: FilePath -> String -> IO (ExitCode, String, String)
+callCommand cwd cmd =
+  readCreateProcessWithExitCode (shell cmd) {cwd = Just cwd} []
 
-findLongHash :: [FilePath] -> String -> IO String
-findLongHash [] _ = return [] -- No long hash found with the provided ident.
-findLongHash (path:paths) ident = do
-  (e, out, _) <- callRevParse path ident
+getLongHash :: FilePath -> String -> IO String
+getLongHash path version = do
+  (_, hash, _) <- callCommand path ("git rev-parse " ++ version)
+  print hash
+  return (init hash) -- Drop last newline in rev-parse output.
+
+getGoModHead :: FilePath -> String -> IO String
+getGoModHead path version = do
+  (e, mod, _) <- callCommand path ("git show " ++ version ++ ":go.mod")
   if e == ExitSuccess
-    then return (init out) -- Drop last newline in rev-parse output.
-    else findLongHash paths ident
+    then return (init mod)
+    else return []
+
+findLongHash :: [FilePath] -> String -> String -> IO String
+findLongHash [] _ _ = return [] -- No long hash found.
+findLongHash (path:paths) name version = do
+  mod <- getGoModHead path version
+  if name `isSuffixOf` mod
+    then getLongHash path version
+    else findLongHash paths name version
