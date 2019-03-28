@@ -2,8 +2,8 @@
 module Lib where
 
 import Control.Monad (filterM)
-import GHC.IO.Exception (ExitCode)
-import System.Directory (doesDirectoryExist, listDirectory)
+import GHC.IO.Exception (ExitCode(ExitSuccess))
+import System.Directory (canonicalizePath, doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
 import System.Process
   ( StdStream(CreatePipe)
@@ -46,13 +46,24 @@ toEgoDep :: GoModule -> EgoDep
 -- `n` and `version` is the same thing as `h`.
 toEgoDep GoModule {path = n, version = h} = EgoDep {name = n, hash = h, uri = n}
 
+getAbsDirectories :: FilePath -> IO [FilePath]
+getAbsDirectories filePath =
+  getDirectories filePath >>= mapM (canonicalizePath . (filePath </>))
+
 getDirectories :: FilePath -> IO [FilePath]
 getDirectories filePath =
   listDirectory filePath >>= filterM (doesDirectoryExist . (filePath </>))
 
-getLongHash :: FilePath -> String -> IO (ExitCode, String, String)
-getLongHash filePath ident =
+callRevParse :: FilePath -> String -> IO (ExitCode, String, String)
+callRevParse filePath ident =
   readCreateProcessWithExitCode
-    (shell ("git rev-parse " ++ ident))
-      {cwd = Just filePath, std_out = CreatePipe}
+    (shell ("git rev-parse " ++ ident)) {cwd = Just filePath}
     []
+
+findLongHash :: [FilePath] -> String -> IO String
+findLongHash [] _ = return [] -- No long hash found with the provided ident.
+findLongHash (path:paths) ident = do
+  (e, out, _) <- callRevParse path ident
+  if e == ExitSuccess
+    then return (init out) -- Drop last newline in rev-parse output.
+    else findLongHash paths ident

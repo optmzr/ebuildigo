@@ -8,12 +8,7 @@ main = do
   contents <- getContents
   let modules = parseGoModules contents
   let deps = map toEgoDep modules
-  traverse print deps
-  dirs <- getDirectories "/home/willeponken/go/pkg/mod/cache/vcs/"
-  (_, stdout, stderr) <-
-    getLongHash
-      ("/home/willeponken/go/pkg/mod/cache/vcs/" ++ (head dirs))
-      "abcdef"
+  dirs <- getAbsDirectories "/home/willeponken/go/pkg/mod/cache/vcs/"
+  hash <- findLongHash dirs "a34e9553db1e"
   print dirs
-  print stdout
-  print stderr
+  print hash
