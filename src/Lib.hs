@@ -63,21 +63,21 @@ getLongHash path version = do
   (e, hash, _) <- callCommand path ("git rev-parse " ++ version)
   if e == ExitSuccess
     then return $ init hash -- Drop last newline in rev-parse output.
-    else return []
+    else return ""
 
 getGoModHead :: FilePath -> String -> IO String
 getGoModHead path version = do
   (e, mod, _) <- callCommand path ("git show " ++ version ++ ":go.mod")
   if e == ExitSuccess
     then return $ last $ words $ init mod -- Extract last word w/o newline.
-    else return [] -- Nothing found for version or go.mod doesn't exist.
+    else return "" -- Nothing found for version or go.mod doesn't exist.
 
 getGitRemote :: FilePath -> IO String
 getGitRemote path = do
   (e, remote, _) <- callCommand path "git remote get-url origin"
   if e == ExitSuccess
     then return $ init remote -- Drop last newline in get-url output.
-    else return []
+    else return ""
 
 getGoPath :: IO FilePath
 getGoPath = do
@@ -130,4 +130,5 @@ printEgoDep dep = putStrLn $ n ++ rv ++ rf
     n = name dep
     rv = " " ++ rev dep
     rf
-      | rv /= ref dep = " " ++ ref dep
+      | n /= ref dep = " " ++ ref dep
+      | otherwise = ""
