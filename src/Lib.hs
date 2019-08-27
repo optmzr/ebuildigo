@@ -125,10 +125,10 @@ toEgoDep GoModule {path = name, version = version} = do
   return EgoDep {name = name, rev = chooseRev rev hash, ref = toRef remote}
 
 printEgoDep :: EgoDep -> IO ()
-printEgoDep dep = putStrLn $ n ++ rv ++ rf
+printEgoDep dep = print $ n ++ rv ++ rf
   where
     n = name dep
     rv = " " ++ rev dep
     rf
-      | n /= ref dep = " " ++ ref dep
+      | ref dep /= "" && n /= ref dep = " " ++ ref dep
       | otherwise = ""
